@@ -3,15 +3,24 @@
   "version": "0.0.1",
   "description": "Random data generator using Node/Express",
   "keywords": [
-    "random", "express", "server", "generator"
+    "random",
+    "express",
+    "server",
+    "generator"
   ],
   "license": "UNLICENSED",
   "dependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-node6": "^11.0.0",
+    "body-parser": "^1.17.1",
     "eslint": "^3.19.0",
     "express": "^4.15.2",
     "webpack": "^2.3.3"
   },
   "devDependencies": {
     "@inst/eslint-config-opinionated-panda": "^1.0.1"
+  },
+  "scripts": {
+    "start": "./node_modules/babel-cli/bin/babel-node.js --presets node6 ./src/index.js"
   }
 }
