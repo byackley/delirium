@@ -1,0 +1,15 @@
+{
+  "extends": [ "@inst/opinionated-panda/server" ],
+  "rules": {
+    "no-duplicate-imports": "off",
+    "no-process-env": "warn"
+  },
+  "settings": {
+    "import/core-modules": [
+      "@local/config",
+      "@local/lti",
+      "@local/dynamo",
+      "@local/log"
+    ]
+  }
+}

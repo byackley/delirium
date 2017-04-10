@@ -1,0 +1,17 @@
+{
+  "name": "Delirium",
+  "version": "0.0.1",
+  "description": "Random data generator using Node/Express",
+  "keywords": [
+    "random", "express", "server", "generator"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "eslint": "^3.19.0",
+    "express": "^4.15.2",
+    "webpack": "^2.3.3"
+  },
+  "devDependencies": {
+    "@inst/eslint-config-opinionated-panda": "^1.0.1"
+  }
+}
