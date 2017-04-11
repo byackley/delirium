@@ -27,7 +27,7 @@ app.get('/',
       res.send(`${HEADER}<pre>${JSON.stringify(maker(defs), null, '\t')}</pre>${FOOTER}`);
     } catch (err) {
       res.status(HTTP_ERROR).send(`${HEADER}<p>Error: variable `
-        + `<span id="error">${err.message}</span> not found.</p>${FOOTER}`);
+        + `<span id="error">${err.message}</span> not found.</p><pre>${err.stack}</pre>${FOOTER}`);
     }
     next();
   }

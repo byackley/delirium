@@ -1,6 +1,8 @@
 // @flow
 /* eslint-disable no-magic-numbers */
 
+import crypto from 'crypto';
+
 const DEFAULT_N = 100;
 
 const CONSONANTS = ['b', 'c', 'ch', 'd', 'g', 'j', 'k', 'l', 'm',
@@ -8,8 +10,26 @@ const CONSONANTS = ['b', 'c', 'ch', 'd', 'g', 'j', 'k', 'l', 'm',
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'ai', 'oi', 'ei', 'au', 'ou'];
 const MAX_SYLS = 2;
 
+function rand() {
+  const base = crypto.randomBytes(32).readUInt32BE(0);
+
+  return base / (2 ** 32);
+}
+
 function choice(ar) {
-  return ar[Math.floor(ar.length * Math.random())];
+  return ar[Math.floor(ar.length * rand())];
+}
+
+const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+
+function string(source, len) {
+  const array = [];
+
+  for (let i = 0; i < len; i++) {
+    array.push(choice(source));
+  }
+  return array.join('');
 }
 
 function syllable() {
@@ -26,11 +46,24 @@ function word(syls) {
   for (let i = 0; i < syls; i++) {
     out += syllable();
   }
-  return titleCase(out);
+  return out;
+}
+
+function sentence() {
+  const words = poisson(4) + 1;
+
+  let out = '';
+
+  for (let i = 0; i < words; i++) {
+    out += word(poisson(1) + 1);
+    out += ' ';
+  }
+  out = `${out.charAt(0).toUpperCase() + out.slice(1, out.length - 1)}.`;
+  return out;
 }
 
 function name() {
-  return `${word(int(1, MAX_SYLS))} ${word(int(1, MAX_SYLS))}`;
+  return `${titleCase(word(int(1, MAX_SYLS)))} ${titleCase(word(int(1, MAX_SYLS)))}`;
 }
 
 // // // // // NUMERICAL GENERATORS // // // // //
@@ -44,7 +77,7 @@ function clamp(n, min, max) {
 const IH_STEPS = 12;
 
 function int(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(rand() * (max - min + 1)) + min;
 }
 
 function normal(mu, sigma, min, max) {
@@ -52,7 +85,7 @@ function normal(mu, sigma, min, max) {
   let acc = 0;
 
   for (let i = 0; i < IH_STEPS; i++) {
-    acc += Math.random();
+    acc += rand();
   }
 
   const result = mu + (sigma * (acc - (IH_STEPS / 2)));
@@ -78,10 +111,18 @@ function poisson(lambda) {
   let p = 1;
 
   while (p > L) {
-    p *= Math.random();
+    p *= rand();
     k += 1;
   }
-  return k - 1;
+  return k;
+}
+
+function latlong() {
+  // these values should end up uniformly distributed over the sphere
+  const theta = (rand() * 360) - 180;
+  const pi = (360 / Math.PI * Math.asin(Math.sqrt(rand()))) - 90;
+
+  return [pi, theta];
 }
 
 // // // // // OBJECT GENERATOR // // // // //
@@ -101,6 +142,8 @@ function val(arg, obj) {
   return arg;
 }
 
+/* eslint-disable complexity */
+// this function is just one big switch statement, so of course it's going to have a bunch of paths
 function generate(kind, obj) {
   const spl = kind.split(',');
 
@@ -110,7 +153,7 @@ function generate(kind, obj) {
   case 'word':
     return word(int(1, spl[1]));
   case 'int':
-    return int(1, val(spl[1], obj));
+    return int(val(spl[1], obj), val(spl[2], obj));
   case 'med3':
     return med3(val(spl[1], obj));
   case 'norm':
@@ -120,10 +163,23 @@ function generate(kind, obj) {
     return poisson(val(spl[1], obj));
   case 'choice':
     return choice(spl.slice(1).map((v) => val(v, obj)));
+  case 'latlong':
+    return latlong();
+  case 'digits':
+    return string(DIGITS, val(spl[1], obj));
+  case 'hex':
+    return string(HEX, val(spl[1], obj));
+  case 'string':
+    return string(val(spl[1], obj).split(''), val(spl[2], obj));
+  case 'phone':
+    return `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`;
+  case 'sentence':
+    return sentence();
   default:
-    return '---';
+    return spl[0];
   }
 }
+/* eslint-enable complexity */
 
 const maker = (defs) => {
   const nObjects = defs.n || DEFAULT_N;
@@ -134,13 +190,21 @@ const maker = (defs) => {
 
     for (const key in defs) {
       if (key !== 'n' && defs.hasOwnProperty(key)) {
+        if (obj.hasOwnProperty(key)) { continue }
+
         const value = defs[key];
+
+        if (typeof value !== 'string') {
+          continue;
+        }
 
         if (key.match(/.*\*[0-9]+/)) {
           const [keyBase, reps] = key.split('*');
 
+          obj[keyBase] = [];
+
           for (let n = 0; n < reps; n++) {
-            obj[`${keyBase}${n}`] = generate(value, obj);
+            obj[keyBase][n] = generate(value, obj);
           }
         } else {
           obj[key] = generate(value, obj);
