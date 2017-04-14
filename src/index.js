@@ -24,7 +24,9 @@ app.get('/',
     const defs = req.query;
 
     try {
-      res.send(`${HEADER}<pre>${JSON.stringify(maker(defs), null, '\t')}</pre>${FOOTER}`);
+      res.setHeader('Content-Type', 'application/json');
+      res.append('Access-Control-Allow-Origin', '*');
+      res.send(JSON.stringify(maker(defs)));
     } catch (err) {
       res.status(HTTP_ERROR).send(`${HEADER}<p>Error: variable `
         + `<span id="error">${err.message}</span> not found.</p><pre>${err.stack}</pre>${FOOTER}`);

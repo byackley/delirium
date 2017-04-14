@@ -170,7 +170,7 @@ function generate(kind, obj) {
   case 'hex':
     return string(HEX, val(spl[1], obj));
   case 'string':
-    return string(val(spl[1], obj).split(''), val(spl[2], obj));
+    return string(spl[1].split(''), val(spl[2], obj));
   case 'phone':
     return `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`;
   case 'sentence':
@@ -187,6 +187,9 @@ const maker = (defs) => {
 
   for (let i = 0; i < nObjects; i++) {
     const obj = {};
+
+    obj.id = i;
+    obj.time = Date.now();
 
     for (const key in defs) {
       if (key !== 'n' && defs.hasOwnProperty(key)) {
@@ -211,7 +214,6 @@ const maker = (defs) => {
         }
       }
     }
-    obj.id = i;
     out.push(obj);
   }
   return out;
