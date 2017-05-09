@@ -142,44 +142,78 @@ function val(arg, obj) {
   return arg;
 }
 
-/* eslint-disable complexity */
-// this function is just one big switch statement, so of course it's going to have a bunch of paths
+export const generators = {
+  name,
+  word,
+  int,
+  med3,
+  normal,
+  poisson,
+  choice,
+  latlong,
+  digits: (n, obj) => string(DIGITS, val(n, obj)),
+  hex:    (n, obj) => string(HEX, val(n, obj)),
+  string,
+  phone:  () => `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`,
+  sentence
+};
+generators.name.doc = 'Generates a full name (first and last)';
+generators.word.doc = 'Generates one lowercased word';
+generators.word.args = ['syllables'];
+generators.int.doc = 'Generates an integer between [min] and [max]';
+generators.int.args = ['min', 'max'];
+generators.med3.doc = 'Generates the median of three random numbers between 1 and [max]';
+generators.med3.args = ['max'];
+generators.normal.doc = '(norm) Generates a number using a normal distribution';
+generators.normal.args = ['mu', 'sigma', 'min', 'max'];
+generators.poisson.doc = 'Generates a number using a Poisson distribution';
+generators.poisson.args = ['lambda'];
+generators.choice.doc = 'Chooses randomly between given options';
+generators.choice.args = ['...options'];
+generators.latlong.doc = 'Generates a lat / long pair';
+generators.digits.doc = 'Generates a string of decimal digits';
+generators.digits.args = ['length'];
+generators.hex.doc = 'Generates a string of hexadecimal digits';
+generators.hex.args = ['length'];
+generators.string.doc = 'Generates a string using the given alphabet';
+generators.string.args = ['alphabet', 'length'];
+generators.phone.doc = 'Generates a formatted 10-digit phone number';
+generators.sentence.doc = 'Generates a sentence of gibberish';
+
+
+/* eslint-disable no-unused-vars */
+// These methods should have a consistent signature, whether or not they use all
+// available data.
+export const parsers = {
+  name:     (spl, obj) => name(),
+  word:     (spl, obj) => word(int(1, spl[1])),
+  'int':    (spl, obj) => int(val(spl[1], obj), val(spl[2], obj)),
+  med3:     (spl, obj) => med3(val(spl[1], obj)),
+  norm:     (spl, obj) => normal(
+                            val(spl[1], obj), val(spl[2], obj),
+                            val(spl[3], obj), val(spl[4], obj)),
+  normal:   (spl, obj) => normal(
+                            val(spl[1], obj), val(spl[2], obj),
+                            val(spl[3], obj), val(spl[4], obj)),
+  poisson:  (spl, obj) => poisson(val(spl[1], obj)),
+  choice:   (spl, obj) => choice(spl.slice(1).map((v) => val(v, obj))),
+  latlong:  (spl, obj) => latlong(),
+  digits:   (spl, obj) => generators.digits(spl[1], obj),
+  hex:      (spl, obj) => generators.hex(spl[1], obj),
+  string:   (spl, obj) => string(spl[1].split(''), val(spl[2], obj)),
+  phone:    (spl, obj) => generators.phone(),
+  sentence: (spl, obj) => sentence()
+};
+/* eslint-enable no-unused-vars */
+
 function generate(kind, obj) {
   const spl = kind.split(',');
 
-  switch (spl[0]) {
-  case 'name':
-    return name();
-  case 'word':
-    return word(int(1, spl[1]));
-  case 'int':
-    return int(val(spl[1], obj), val(spl[2], obj));
-  case 'med3':
-    return med3(val(spl[1], obj));
-  case 'norm':
-  case 'normal':
-    return normal(val(spl[1], obj), val(spl[2], obj), val(spl[3], obj), val(spl[4], obj));
-  case 'poisson':
-    return poisson(val(spl[1], obj));
-  case 'choice':
-    return choice(spl.slice(1).map((v) => val(v, obj)));
-  case 'latlong':
-    return latlong();
-  case 'digits':
-    return string(DIGITS, val(spl[1], obj));
-  case 'hex':
-    return string(HEX, val(spl[1], obj));
-  case 'string':
-    return string(spl[1].split(''), val(spl[2], obj));
-  case 'phone':
-    return `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`;
-  case 'sentence':
-    return sentence();
-  default:
-    return spl[0];
+  if (parsers.hasOwnProperty(spl[0])) {
+    return parsers[spl[0]](spl, obj);
   }
+  return spl[0];
 }
-/* eslint-enable complexity */
 
 const maker = (defs) => {
   const nObjects = defs.n || DEFAULT_N;
