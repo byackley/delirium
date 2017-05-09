@@ -8,6 +8,7 @@
     "server",
     "generator"
   ],
+  "main": "lib/index.js",
   "license": "UNLICENSED",
   "dependencies": {
     "babel-cli": "^6.24.1",
@@ -21,6 +22,8 @@
     "@inst/eslint-config-opinionated-panda": "^1.0.1"
   },
   "scripts": {
-    "start": "./node_modules/babel-cli/bin/babel-node.js --presets node6 ./src/index.js"
+    "build": "babel src --out-dir lib",
+    "prestart": "yarn build",
+    "start": "node lib/server"
   }
 }
