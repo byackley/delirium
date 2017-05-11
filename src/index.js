@@ -19,6 +19,8 @@ function rand() {
 function choice(ar) {
   return ar[Math.floor(ar.length * rand())];
 }
+choice.doc = 'Chooses randomly between given options';
+choice.args = ['...options'];
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
@@ -30,6 +32,12 @@ function string(source, len) {
     array.push(choice(source));
   }
   return array.join('');
+}
+string.doc = 'Generates a string using the given alphabet';
+string.args = ['alphabet', 'length'];
+
+function stringOf(source) {
+  return (len) => string(source, len);
 }
 
 function syllable() {
@@ -48,6 +56,8 @@ function word(syls) {
   }
   return out;
 }
+word.doc = 'Generates one lowercased word';
+word.args = ['syllables'];
 
 function sentence() {
   const words = poisson(4) + 1;
@@ -61,10 +71,12 @@ function sentence() {
   out = `${out.charAt(0).toUpperCase() + out.slice(1, out.length - 1)}.`;
   return out;
 }
+sentence.doc = 'Generates a sentence of gibberish';
 
 function name() {
   return `${titleCase(word(int(1, MAX_SYLS)))} ${titleCase(word(int(1, MAX_SYLS)))}`;
 }
+name.doc = 'Generates a full name (first and last)';
 
 // // // // // NUMERICAL GENERATORS // // // // //
 
@@ -79,6 +91,8 @@ const IH_STEPS = 12;
 function int(min, max) {
   return Math.floor(rand() * (max - min + 1)) + min;
 }
+int.doc = 'Generates an integer between [min] and [max]';
+int.args = ['min', 'max'];
 
 function normal(mu, sigma, min, max) {
   // note: this is not exactly normal, but a close approximation using the Irwin-Hall distribution
@@ -92,6 +106,8 @@ function normal(mu, sigma, min, max) {
 
   return clamp(result, min, max);
 }
+normal.doc = '(norm) Generates a number using a normal distribution';
+normal.args = ['mu', 'sigma', 'min', 'max'];
 
 function med3(max) {
   let a = int(1, max);
@@ -104,6 +120,8 @@ function med3(max) {
 
   return b;
 }
+med3.doc = 'Generates the median of three random numbers between 1 and [max]';
+med3.args = ['max'];
 
 function poisson(lambda) {
   const L = Math.exp(-lambda);
@@ -116,6 +134,8 @@ function poisson(lambda) {
   }
   return k;
 }
+poisson.doc = 'Generates a number using a Poisson distribution';
+poisson.args = ['lambda'];
 
 function latlong() {
   // these values should end up uniformly distributed over the sphere
@@ -124,6 +144,22 @@ function latlong() {
 
   return [pi, theta];
 }
+latlong.doc = 'Generates a lat / long pair';
+
+function phone() {
+  return `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`;
+}
+phone.doc = 'Generates a formatted 10-digit phone number';
+
+const digits = stringOf(DIGITS);
+
+digits.doc = 'Generates a string of decimal digits';
+digits.args = ['length'];
+
+const hex = stringOf(HEX);
+
+hex.doc = 'Generates a string of hexadecimal digits';
+hex.args = ['length'];
 
 // // // // // OBJECT GENERATOR // // // // //
 
@@ -142,44 +178,47 @@ function val(arg, obj) {
   return arg;
 }
 
-/* eslint-disable complexity */
-// this function is just one big switch statement, so of course it's going to have a bunch of paths
+/* eslint-disable object-property-newline */
+// It's silly to put these one per line.
+export const generators = {
+  name, word, int, med3, normal, poisson, choice,
+  latlong, digits, hex, string, phone, sentence
+};
+/* eslint-enable object-property-newline */
+
+/* eslint-disable no-unused-vars */
+// These methods should have a consistent signature, whether or not they use all
+// available data.
+export const parsers = {
+  name:     (spl, obj) => name(),
+  word:     (spl, obj) => word(int(1, spl[1])),
+  'int':    (spl, obj) => int(val(spl[1], obj), val(spl[2], obj)),
+  med3:     (spl, obj) => med3(val(spl[1], obj)),
+  norm:     (spl, obj) => normal(
+                            val(spl[1], obj), val(spl[2], obj),
+                            val(spl[3], obj), val(spl[4], obj)),
+  normal:   (spl, obj) => normal(
+                            val(spl[1], obj), val(spl[2], obj),
+                            val(spl[3], obj), val(spl[4], obj)),
+  poisson:  (spl, obj) => poisson(val(spl[1], obj)),
+  choice:   (spl, obj) => choice(spl.slice(1).map((v) => val(v, obj))),
+  latlong:  (spl, obj) => latlong(),
+  digits:   (spl, obj) => generators.digits(val(spl[1], obj)),
+  hex:      (spl, obj) => generators.hex(val(spl[1], obj)),
+  string:   (spl, obj) => string(spl[1].split(''), val(spl[2], obj)),
+  phone:    (spl, obj) => generators.phone(),
+  sentence: (spl, obj) => sentence()
+};
+/* eslint-enable no-unused-vars */
+
 function generate(kind, obj) {
   const spl = kind.split(',');
 
-  switch (spl[0]) {
-  case 'name':
-    return name();
-  case 'word':
-    return word(int(1, spl[1]));
-  case 'int':
-    return int(val(spl[1], obj), val(spl[2], obj));
-  case 'med3':
-    return med3(val(spl[1], obj));
-  case 'norm':
-  case 'normal':
-    return normal(val(spl[1], obj), val(spl[2], obj), val(spl[3], obj), val(spl[4], obj));
-  case 'poisson':
-    return poisson(val(spl[1], obj));
-  case 'choice':
-    return choice(spl.slice(1).map((v) => val(v, obj)));
-  case 'latlong':
-    return latlong();
-  case 'digits':
-    return string(DIGITS, val(spl[1], obj));
-  case 'hex':
-    return string(HEX, val(spl[1], obj));
-  case 'string':
-    return string(spl[1].split(''), val(spl[2], obj));
-  case 'phone':
-    return `${string(DIGITS, 3)}-${string(DIGITS, 3)}-${string(DIGITS, 4)}`;
-  case 'sentence':
-    return sentence();
-  default:
-    return spl[0];
+  if (parsers.hasOwnProperty(spl[0])) {
+    return parsers[spl[0]](spl, obj);
   }
+  return spl[0];
 }
-/* eslint-enable complexity */
 
 const maker = (defs) => {
   const nObjects = defs.n || DEFAULT_N;
