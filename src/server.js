@@ -52,13 +52,14 @@ app.get('/',
   (req, res) => {
     const defs = req.query;
 
+    res.append('Access-Control-Allow-Origin', '*');
+
     if (Object.keys(defs).length === 0) {
       return res.send(`${HEADER}Generators:${generateDocsHtml()}${FOOTER}`);
     }
 
     try {
       res.setHeader('Content-Type', 'application/json');
-      res.append('Access-Control-Allow-Origin', '*');
       return res.send(JSON.stringify(maker(defs)));
     } catch (err) {
       return res.status(HTTP_ERROR).send(`${HEADER}<p>Error: variable `

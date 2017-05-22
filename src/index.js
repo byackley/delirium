@@ -178,6 +178,8 @@ function val(arg, obj) {
     if (obj.hasOwnProperty(arg.slice(1))) { return obj[arg.slice(1)] }
 
     throw new VariableError(arg.slice(1));
+  } else if (arg.match(/d[0-9]+/)) {
+    return int(1, parseInt(arg.slice(1)));
   } else if (arg.match(/[0-9]+/)) {
     return parseInt(arg);
   } else if (arg.match(/[0-9.]+/)) {
@@ -193,6 +195,20 @@ function pack(args, obj) {
     if (obj.hasOwnProperty(field)) {
       out[field] = obj[field];
     }
+  }
+  return out;
+}
+
+function zip(args, obj) {
+  const out = [];
+
+  for (let i = 0; i < obj[args[0]].length; i++) {
+    const temp = {};
+
+    for (const arg of args) {
+      temp[arg] = obj[arg][i];
+    }
+    out.push(temp);
   }
   return out;
 }
@@ -229,7 +245,8 @@ export const parsers = {
   phone:    (spl, obj) => generators.phone(),
   sentence: (spl, obj) => sentence(),
   pack:     (spl, obj) => pack(spl.slice(1), obj),
-  date:     (spl, obj) => date()
+  date:     (spl, obj) => date(),
+  zip:      (spl, obj) => zip(spl.slice(1), obj)
 };
 /* eslint-enable no-unused-vars */
 
@@ -262,8 +279,10 @@ const maker = (defs) => {
           continue;
         }
 
-        if (key.match(/.*\*[0-9]+/)) {
-          const [keyBase, reps] = key.split('*');
+        if (key.match(/.*:((d?)[0-9])|(\*)+/)) {
+          const [keyBase, repsBase] = key.split(':');
+
+          const reps = val(repsBase, obj);
 
           obj[keyBase] = [];
 
