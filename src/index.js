@@ -2,6 +2,7 @@
 /* eslint-disable no-magic-numbers */
 
 import crypto from 'crypto';
+import moment from 'moment';
 
 const DEFAULT_N = 100;
 
@@ -11,7 +12,7 @@ const VOWELS = ['a', 'e', 'i', 'o', 'u', 'ai', 'oi', 'ei', 'au', 'ou'];
 const MAX_SYLS = 2;
 
 function rand() {
-  const base = crypto.randomBytes(32).readUInt32BE(0);
+  const base = crypto.randomBytes(4).readUInt32BE(0);
 
   return base / (2 ** 32);
 }
@@ -161,6 +162,13 @@ const hex = stringOf(HEX);
 hex.doc = 'Generates a string of hexadecimal digits';
 hex.args = ['length'];
 
+function date() {
+  const epoch = crypto.randomBytes(6).readUIntBE(0, 5);
+
+  return moment(epoch).toISOString();
+}
+date.doc = 'Generates a random date';
+
 // // // // // OBJECT GENERATOR // // // // //
 
 class VariableError extends Error {}
@@ -178,11 +186,23 @@ function val(arg, obj) {
   return arg;
 }
 
+function pack(args, obj) {
+  const out = {};
+
+  for (const field of args) {
+    if (obj.hasOwnProperty(field)) {
+      out[field] = obj[field];
+    }
+  }
+  return out;
+}
+
 /* eslint-disable object-property-newline */
 // It's silly to put these one per line.
 export const generators = {
   name, word, int, med3, normal, poisson, choice,
-  latlong, digits, hex, string, phone, sentence
+  latlong, digits, hex, string, phone, sentence,
+  pack, date
 };
 /* eslint-enable object-property-newline */
 
@@ -207,7 +227,9 @@ export const parsers = {
   hex:      (spl, obj) => generators.hex(val(spl[1], obj)),
   string:   (spl, obj) => string(spl[1].split(''), val(spl[2], obj)),
   phone:    (spl, obj) => generators.phone(),
-  sentence: (spl, obj) => sentence()
+  sentence: (spl, obj) => sentence(),
+  pack:     (spl, obj) => pack(spl.slice(1), obj),
+  date:     (spl, obj) => date()
 };
 /* eslint-enable no-unused-vars */
 
