@@ -16,6 +16,7 @@ function rand() {
 
   return base / (2 ** 32);
 }
+rand.doc = 'Generates a random 32-bit float between 0 and 1';
 
 function choice(ar) {
   return ar[Math.floor(ar.length * rand())];
@@ -92,7 +93,7 @@ const IH_STEPS = 12;
 function int(min, max) {
   return Math.floor(rand() * (max - min + 1)) + min;
 }
-int.doc = 'Generates an integer between [min] and [max]';
+int.doc = 'Generates an integer between [min] and [max] inclusive';
 int.args = ['min', 'max'];
 
 function normal(mu, sigma, min, max) {
@@ -107,8 +108,10 @@ function normal(mu, sigma, min, max) {
 
   return clamp(result, min, max);
 }
-normal.doc = '(norm) Generates a number using a normal distribution';
+normal.doc = 'Generates a number using a normal distribution, clamped between [min] and [max]';
 normal.args = ['mu', 'sigma', 'min', 'max'];
+// useful as a synonym
+const norm = normal;
 
 function med3(max) {
   let a = int(1, max);
@@ -135,7 +138,7 @@ function poisson(lambda) {
   }
   return k;
 }
-poisson.doc = 'Generates a number using a Poisson distribution';
+poisson.doc = 'Generates a number using a Poisson distribution with mean [lambda]';
 poisson.args = ['lambda'];
 
 function latlong() {
@@ -168,6 +171,12 @@ function date() {
   return moment(epoch).toISOString();
 }
 date.doc = 'Generates a random date';
+
+function bool(pTrue) {
+  return rand() < pTrue;
+}
+bool.doc = 'Generates a random boolean with given probability of truth';
+bool.args = ['pTrue'];
 
 // // // // // OBJECT GENERATOR // // // // //
 
@@ -216,9 +225,9 @@ function zip(args, obj) {
 /* eslint-disable object-property-newline */
 // It's silly to put these one per line.
 export const generators = {
-  name, word, int, med3, normal, poisson, choice,
+  name, word, int, med3, normal, norm, poisson, choice,
   latlong, digits, hex, string, phone, sentence,
-  pack, date
+  pack, date, rand, bool
 };
 /* eslint-enable object-property-newline */
 
@@ -246,7 +255,9 @@ export const parsers = {
   sentence: (spl, obj) => sentence(),
   pack:     (spl, obj) => pack(spl.slice(1), obj),
   date:     (spl, obj) => date(),
-  zip:      (spl, obj) => zip(spl.slice(1), obj)
+  zip:      (spl, obj) => zip(spl.slice(1), obj),
+  bool:     (spl, obj) => bool(spl[1]),
+  rand:     (spl, obj) => rand()
 };
 /* eslint-enable no-unused-vars */
 

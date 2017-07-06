@@ -1,6 +1,6 @@
 {
   "name": "delirium",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Random data generator using Node/Express",
   "keywords": [
     "random",
