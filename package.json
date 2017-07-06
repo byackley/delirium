@@ -1,6 +1,6 @@
 {
   "name": "delirium",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Random data generator using Node/Express",
   "keywords": [
     "random",
@@ -26,5 +26,14 @@
     "build": "babel src --out-dir lib",
     "prestart": "yarn build",
     "start": "node lib/server"
+  },
+  "repository": {
+    "type": "git",
+    "url" : "https://github.com/byackley/delirium.git"
+  },
+  "homepage": "https://github.com/byackley/delirium",
+  "author": {
+    "name": "Ben Yackley",
+    "email": "byackley@instructure.com"
   }
 }
