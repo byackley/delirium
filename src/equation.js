@@ -60,12 +60,16 @@ function randomExpr() {
   case 17:
   case 18:
     return choice(ALPHA_UPPER);
+  case 22:
+  case 20:
+  case 21:
+    return `${int(-2, 10)}`;
   case 4:
-    return '{~^~}';
+    return '{{~}^{~}}';
   case 5:
-    return '{~_~}';
+    return '{{~}_{~}}';
   case 6:
-    return `~${choice(BINOP)}~`;
+    return `{~}${choice(BINOP)}{~}`;
   case 7:
     return `${choice(ACCENTS)}{~}`;
   case 8:
