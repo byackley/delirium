@@ -1,8 +1,9 @@
 // @flow
 /* eslint-disable no-magic-numbers */
 
-import crypto from 'crypto';
+import Random from 'random-js';
 import moment from 'moment';
+import fs from 'fs';
 
 const DEFAULT_N = 100;
 
@@ -11,10 +12,30 @@ const CONSONANTS = ['b', 'c', 'ch', 'd', 'g', 'j', 'k', 'l', 'm',
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'ai', 'oi', 'ei', 'au', 'ou'];
 const MAX_SYLS = 2;
 
-function rand() {
-  const base = crypto.randomBytes(4).readUInt32BE(0);
+const ALPHA_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const ALPHA_LOWER = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
-  return base / (2 ** 32);
+const STREETS = ['St', 'Ave', 'Blvd', 'Pkwy', 'Dr', 'Circ', 'Way', 'Road', 'Lane', 'Terr', 'Hwy'];
+
+// eslint-disable-next-line no-sync
+const KANJI = fs.readFileSync('kanji.txt', 'utf8')
+  .trim()
+  .split('');
+
+const mt = Random.engines.mt19937();
+
+mt.autoSeed();
+
+function setSeed(n) {
+  mt.seed(n);
+  console.log(`seeded rng to ${n}`);
+  return 'foo';
+}
+setSeed.doc = 'Seed the RNG to a given value, for predictable results';
+setSeed.args = ['seed'];
+
+function rand() {
+  return Random.real(0, 1.0)(mt);
 }
 rand.doc = 'Generates a random 32-bit float between 0 and 1';
 
@@ -23,6 +44,12 @@ function choice(ar) {
 }
 choice.doc = 'Chooses randomly between given options';
 choice.args = ['...options'];
+
+function deal(count, ar) {
+  return Random.sample(mt, ar, count);
+}
+deal.doc = 'Chooses a given number of objects from an array without repeats';
+deal.args = ['array', 'count'];
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
@@ -76,9 +103,82 @@ function sentence() {
 sentence.doc = 'Generates a sentence of gibberish';
 
 function name() {
-  return `${titleCase(word(int(1, MAX_SYLS)))} ${titleCase(word(int(1, MAX_SYLS)))}`;
+  return `${capWord()} ${capWord()}`;
 }
 name.doc = 'Generates a full name (first and last)';
+
+function capWord() {
+  return titleCase(word(int(1, MAX_SYLS)));
+}
+
+function kanji(n) {
+  return string(KANJI, n);
+}
+
+function uuid() {
+  return Random.uuid4(mt);
+}
+
+function streetAddress() {
+  return `${int(1, 25000)} ${capWord()} ${choice(STREETS)}`;
+}
+
+function zipCode(region) {
+  switch (region.toLowerCase()) {
+  case 'us':
+    return template('00000');
+  case 'ca':
+    return template('A0A 0A0');
+  default:
+    return template('AAA 000');
+  }
+}
+
+function license() {
+  return template(choice(['AAA000', '000AAA', 'AAA0000', '0AAA000', 'AAAAAAA']));
+}
+license.doc = 'Generates a random license plate';
+
+function template(st) {
+  let out = '';
+
+  for (const ch of st.split('')) {
+    switch (ch) {
+    case 'A':
+      out += choice(ALPHA_UPPER);
+      break;
+    case 'a':
+      out += choice(ALPHA_LOWER);
+      break;
+    case '0':
+      out += choice(DIGITS);
+      break;
+    case '1':
+      out += choice(DIGITS.slice(1));
+      break;
+    default:
+      out += ch;
+    }
+  }
+  return out;
+}
+template.doc = 'Generates a random string based on a template (use A, a, and 0)';
+
+function address(region) {
+  if (bool()) {
+    return `${streetAddress()}, ${capWord()}, ${template('AA')} ${zipCode(region)}`;
+  }
+  return `${streetAddress()}, ${choice(['Apt', 'Unit', 'Bldg'])} ${int(1, 999)}, `
+    + `${capWord()}, ${template('AA')} ${zipCode(region)}`;
+}
+address.doc = 'Generates a random complete address given a region (currently just US and CA)';
+address.args = 'region';
+
+function email() {
+  return `${string(ALPHA_LOWER, int(2, 10))}@${string(ALPHA_LOWER, int(2, 10))}.`
+    + `${choice(['com', 'org', 'net', 'gov'])}`;
+}
+email.doc = 'Generates a random email address';
 
 // // // // // NUMERICAL GENERATORS // // // // //
 
@@ -166,13 +266,13 @@ hex.doc = 'Generates a string of hexadecimal digits';
 hex.args = ['length'];
 
 function date() {
-  const epoch = crypto.randomBytes(6).readUIntBE(0, 5);
+  const epoch = Random.integer(0, 2 ** 40)(mt);
 
   return moment(epoch).toISOString();
 }
 date.doc = 'Generates a random date';
 
-function bool(pTrue) {
+function bool(pTrue = 0.5) {
   return rand() < pTrue;
 }
 bool.doc = 'Generates a random boolean with given probability of truth';
@@ -227,7 +327,8 @@ function zip(args, obj) {
 export const generators = {
   name, word, int, med3, normal, norm, poisson, choice,
   latlong, digits, hex, string, phone, sentence,
-  pack, date, rand, bool
+  pack, date, rand, bool, deal, kanji, uuid, setSeed,
+  license, address, template, email
 };
 /* eslint-enable object-property-newline */
 
@@ -257,7 +358,15 @@ export const parsers = {
   date:     (spl, obj) => date(),
   zip:      (spl, obj) => zip(spl.slice(1), obj),
   bool:     (spl, obj) => bool(spl[1]),
-  rand:     (spl, obj) => rand()
+  kanji:    (spl, obj) => kanji(spl[1]),
+  deal:     (spl, obj) => deal(spl[1], spl.slice(2)),
+  rand:     (spl, obj) => rand(),
+  setSeed:  (spl, obj) => setSeed(spl[1]),
+  uuid:     (spl, obj) => uuid(),
+  license:  (spl, obj) => license(),
+  address:  (spl, obj) => address(spl[1]),
+  template: (spl, obj) => template(spl[1]),
+  email:    (spl, obj) => email()
 };
 /* eslint-enable no-unused-vars */
 
