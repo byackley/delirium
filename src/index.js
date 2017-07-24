@@ -12,8 +12,8 @@ const CONSONANTS = ['b', 'c', 'ch', 'd', 'g', 'j', 'k', 'l', 'm',
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'ai', 'oi', 'ei', 'au', 'ou'];
 const MAX_SYLS = 2;
 
-const ALPHA_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const ALPHA_LOWER = 'abcdefghijklmnopqrstuvwxyz'.split('');
+export const ALPHA_UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+export const ALPHA_LOWER = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
 const STREETS = ['St', 'Ave', 'Blvd', 'Pkwy', 'Dr', 'Circ', 'Way', 'Road', 'Lane', 'Terr', 'Hwy'];
 
@@ -39,7 +39,7 @@ function rand() {
 }
 rand.doc = 'Generates a random 32-bit float between 0 and 1';
 
-function choice(ar) {
+export function choice(ar) {
   return ar[Math.floor(ar.length * rand())];
 }
 choice.doc = 'Chooses randomly between given options';
@@ -190,7 +190,7 @@ function clamp(n, min, max) {
 
 const IH_STEPS = 12;
 
-function int(min, max) {
+export function int(min, max) {
   return Math.floor(rand() * (max - min + 1)) + min;
 }
 int.doc = 'Generates an integer between [min] and [max] inclusive';
