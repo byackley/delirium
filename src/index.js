@@ -41,8 +41,7 @@ mt.autoSeed();
 
 function setSeed(n) {
   mt.seed(n);
-  console.log(`seeded rng to ${n}`);
-  return 'foo';
+  return `set seed to ${n}`;
 }
 setSeed.doc = 'Seed the RNG to a given value, for predictable results';
 setSeed.args = ['seed'];
@@ -185,7 +184,7 @@ function address(region) {
     + `${capWord()}, ${template('AA')} ${zipCode(region)}`;
 }
 address.doc = 'Generates a random complete address given a region (currently just US and CA)';
-address.args = 'region';
+address.args = ['region'];
 
 function email() {
   return `${string(ALPHA_LOWER, int(2, 10))}@${string(ALPHA_LOWER, int(2, 10))}.`
@@ -374,7 +373,7 @@ export const parsers = {
   kanji:    (spl, obj) => kanji(spl[1]),
   deal:     (spl, obj) => deal(spl[1], spl.slice(2)),
   rand:     (spl, obj) => rand(),
-  setSeed:  (spl, obj) => setSeed(spl[1]),
+  seed:     (spl, obj) => setSeed(spl[1]),
   uuid:     (spl, obj) => uuid(),
   license:  (spl, obj) => license(),
   address:  (spl, obj) => address(spl[1]),
@@ -384,6 +383,7 @@ export const parsers = {
 /* eslint-enable no-unused-vars */
 
 function generate(kind, obj) {
+
   const spl = kind.split(',');
 
   if (parsers.hasOwnProperty(spl[0])) {

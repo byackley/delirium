@@ -1,6 +1,6 @@
 {
   "name": "delirium",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Random data generator using Node/Express",
   "keywords": [
     "random",
@@ -11,17 +11,17 @@
   "main": "lib/index.js",
   "license": "UNLICENSED",
   "dependencies": {
-    "babel-cli": "^6.24.1",
+    "babel-cli": "^6.26.0",
     "babel-preset-node6": "^11.0.0",
-    "body-parser": "^1.17.1",
-    "eslint": "^3.19.0",
-    "express": "^4.15.2",
+    "body-parser": "^1.18.1",
+    "express": "^4.15.4",
     "moment": "^2.18.1",
     "random-js": "^1.0.8",
     "webpack": "^2.3.3"
   },
   "devDependencies": {
-    "@inst/eslint-config-opinionated-panda": "^1.0.1"
+    "@inst/eslint-config-opinionated-panda": "^1.0.3",
+    "eslint": "^4.7.0"
   },
   "scripts": {
     "build": "babel src --out-dir lib",
