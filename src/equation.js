@@ -46,6 +46,21 @@ const ACCENTS = [
 ].map((st) => `\\${st}`);
 
 /* eslint-disable no-magic-numbers, complexity */
+function randomShort() {
+  switch (int(1, 4)) {
+  case 1:
+    return choice(GREEK);
+  case 2:
+    return choice(ALPHA_LOWER);
+  case 3:
+    return choice(ALPHA_UPPER);
+  case 4:
+    return `${int(-2, 100)}`;
+  default:
+    return '0';
+  }
+}
+
 function randomExpr() {
   switch (int(1, 25)) {
   case 1:
@@ -89,16 +104,19 @@ function randomExpr() {
   }
 }
 
-function generate() {
+function generate(max) {
   let expr = `{~}${choice(REL)}{~}`;
 
   while (expr.includes('~')) {
     console.log(expr);
     expr = expr.replace(/(~)/g, () => randomExpr());
+    if (expr.length > max) {
+      expr = expr.replace(/(~)/g, () => randomShort());
+    }
   }
 
   return expr;
 }
 
 // eslint-disable-next-line no-console
-console.log(generate());
+console.log(generate(100));
